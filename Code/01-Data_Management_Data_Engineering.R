@@ -14,7 +14,7 @@ gel_std <- function(x){
 
 
 
-#Setting Working Directory
+#Set Working Directory
 setwd(file.path("...", "Data"))
 
 #Data Management ####
