@@ -7,7 +7,8 @@ library(tidyverse)
 library(gridExtra)
 
 #Set Directory
-#setwd(file.path("...", "Visualizations"))
+#setwd(file.path("...", "Coal_Mining"))
+
 
 #Figure 1 - Mortality Rate Distribution and Mortality Rates vs. Time - by State #######
 q1 <- coal_data%>%
@@ -35,12 +36,12 @@ q2 <- coal_data%>%
        title = "State Mortality Rate",
        subtitle = "All State in US, 2010-2017")
 
-png("FIGURE1.png", width = 8.66, height=5.75, units = "in", res = 600)
+png("Visualizations/FIGURE1.png", width = 8.66, height=5.75, units = "in", res = 600)
 gridExtra::grid.arrange(q1, q2, nrow=2)
 dev.off()
 
 #Figure 2 - Distribution of Coal Mining on County Level #####
-png("FIGURE2.png", width = 8.66, height=5.75, units = "in", res = 600)
+png("Visualizations/FIGURE2.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 coal_data %>%
   filter(coal_prod>0)%>%
@@ -53,12 +54,15 @@ coal_data %>%
        subtitle = "Coal Mining Counties in United States",
        x="Short Tons Mined per Year, logged",
        y="Frequency")+
-  geom_vline(xintercept = mean(coal_cc$coal_prod), size=1.0, color="black", linetype=1)+
-  geom_vline(xintercept = median(coal_cc$coal_prod), size=1.0, color="black", linetype=2)+
-  geom_text(aes(x= mean(coal_cc$coal_prod), label="Mean Value", y=0.7), colour="black", hjust = -0.1)+
-  geom_text(aes(x=median(coal_cc$coal_prod), label="Median Value", y=0.7), colour="black", hjust = 1.1)
+  geom_vline(xintercept = mean(coal_data$coal_prod[coal_data$coal_prod>0]), size=1.0, color="black", linetype=1)+
+  geom_vline(xintercept = median(coal_data$coal_prod[coal_data$coal_prod>0]), size=1.0, color="black", linetype=2)+
+  geom_text(aes(x= mean(coal_data$coal_prod[coal_data$coal_prod>0]), label="Mean Value", y=0.7),
+            colour="black", hjust = -0.1)+
+  geom_text(aes(x=median(coal_data$coal_prod[coal_data$coal_prod>0]), label="Median Value", y=0.7),
+            colour="black", hjust = 1.1)
 
 dev.off()
+
 
 #Figure 3, Coal Mining and Mortality Rates ######
 #State level mortality rate, coal vs. non-coal
@@ -93,21 +97,21 @@ p2 <- coal_data%>%
        y="Age-Adjusted Mortality Rate")+
   theme_bw()
 
-png("FIGURE3.png", width = 8.66, height=5.75, units = "in", res = 600)
+png("Visualizations/FIGURE3.png", width = 8.66, height=5.75, units = "in", res = 600)
 p2
 dev.off()
 
 #Table 2 - Descriptive Analysis of continuous variables, Table Quantities #####
 
 #Reading in intial data set for descriptive analysis
-read_csv(file.path("Health_Indicators_County_level.csv"))%>% 
-  filter(FIPS %in% read_csv("Full_Data.csv")$FIPS)%>%
+read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>% 
+  filter(FIPS %in% read_csv("Data/Full_Data.csv")$FIPS)%>%
   mutate_at(vars(everything(), -FIPS, -starts_with("PopTo")), perc_multpl)%>%
   pivot_longer(cols = -FIPS, names_to = "year_type", values_to = "value")%>% 
   separate(year_type, into=c("type","year"), sep = "_")%>% 
   pivot_wider(id_cols = c(FIPS, year, type), names_from = type, values_from = value)%>% 
   mutate(year = as.numeric(year))%>% 
-  inner_join(read_csv("Full_Data.csv"))%>% 
+  inner_join(read_csv("Data/Full_Data.csv"))%>% 
   group_by(State, year)%>% 
   mutate(smoking_m = ifelse(is.na(smoking), mean(smoking, na.rm=T), smoking), 
          drinking_m = ifelse(is.na(drinking), mean(drinking, na.rm=T), drinking), 
@@ -124,7 +128,7 @@ read_csv(file.path("Health_Indicators_County_level.csv"))%>%
   separate(stat, into = c("var", "stat"), sep = "_desc_")%>%
   mutate(val = round(val, 5))%>%
   spread(stat, val) %>%
-  write_csv("tables/table_2-quant.csv")
+  write_csv("Data/Tables/table_2-quant.csv")
 
 #Table Appendix - Descriptives of non-continuous variables Variables by State ####
 descr_ind <- coal_data%>%
@@ -139,7 +143,7 @@ coal_data%>%
   group_by(State)%>%
   summarize(n_county=length(coal_mining))%>%
   inner_join(descr_ind)%>%
-  write_csv("tables/table_app-descr_county.csv")
+  write_csv("Data/Tables/table_app-descr_county.csv")
 
 
 # Figure 4 Population Distribution ####
@@ -147,7 +151,7 @@ coal_data%>%
 #setwd(file.path("...", "Visualizations"))
 
 
-png("FIGURE4.png", width = 8.66, height=5.75, units = "in", res = 600)
+png("Visualizations/FIGURE4.png", width = 8.66, height=5.75, units = "in", res = 600)
 coal_data%>%
   ggplot()+
   geom_density(aes(x=perc_hisp_std), alpha=.2 , fill="blue")+

@@ -1,0 +1,4 @@
+effect,group,term,estimate,std.error,statistic,df,p.value
+fixed,NA,(Intercept),790.7840182231804,13.154617562531591,60.114557832192496,50.08222196423609,2.34332709359128e-48
+ran_pars,State,sd__(Intercept),93.3705211095768,NA,NA,NA,NA
+ran_pars,Residual,sd__Observation,122.35828824034823,NA,NA,NA,NA

@@ -1,0 +1,7 @@
+effect,group,term,estimate,std.error,statistic,df,p.value
+fixed,NA,(Intercept),787.1684346990445,12.854834926426983,61.23520365716893,50.09373450389984,9.225358087019819e-49
+fixed,NA,coal_mining,62.32820832711484,14.747430607745397,4.2263774609239295,23.71609277209322,3.0325079134528886e-4
+ran_pars,State,sd__(Intercept),91.21640207127497,NA,NA,NA,NA
+ran_pars,State,sd__coal_mining,69.95829454509443,NA,NA,NA,NA
+ran_pars,State,cor__(Intercept).coal_mining,-0.25177851161773596,NA,NA,NA,NA
+ran_pars,Residual,sd__Observation,120.83708552456635,NA,NA,NA,NA

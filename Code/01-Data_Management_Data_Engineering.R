@@ -17,14 +17,14 @@ perc_multpl <- function(x) round((x * 100), 3)
 
 
 #Set Working Directory
-#setwd(file.path("...", "Data"))
+#setwd(file.path("...", "Coal_Mining"))
 
 #Data Management ####
 #Reading in Data
-coal_data <- read_csv("Full_Data.csv")
+coal_data <- read_csv("Data/Full_Data.csv")
 
 #joining in health indicator variables from county health ranking
-coal_data <- read_csv(file.path("Health_Indicators_County_level.csv"))%>% # Reading in Data
+coal_data <- read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>% # Reading in Data
   filter(FIPS %in% coal_data$FIPS)%>% # Filtering out data that is not part of the coal mining data due to sampling
   mutate_at(vars(everything(), -FIPS, -starts_with("PopTo")), perc_multpl)%>% #turn into percentages
   pivot_longer(cols = -FIPS, names_to = "year_type", values_to = "value")%>% # transform county data into long format
@@ -38,7 +38,7 @@ coal_data <- read_csv(file.path("Health_Indicators_County_level.csv"))%>% # Read
          obesity_m = ifelse(is.na(obesity), mean(obesity, na.rm=T), obesity),
          uninsured_m = ifelse(is.na(uninsured), mean(uninsured, na.rm=T), uninsured),
          PopToPCP_m = ifelse((is.na(PopToPCP)|PopToPCP<=0), mean(PopToPCP, na.rm=T), PopToPCP))%>%
-  dplyr::select(FIPS, year, State, County, mortality, everything(),
+  dplyr::select(FIPS, year, State, County, mortality, coal_prod, everything(),
                 -smoking, -drinking, -obesity, -uninsured, -PopToPCP)# reducing variables to imputed vars
 
 #Data Engineering
@@ -59,7 +59,7 @@ south <- c("Alabama", "Arkansas", "Florida", "Georgia", "Kentucky", "Louisiana",
 coal_data$southern <- as.numeric(coal_data$State %in% south)
 
 #Applying standardization to continuous variables
-coal_data <- cbind(coal_data, setNames(lapply(coal_data[7:27], gel_std),
-                   paste0(names(coal_data)[8:27], "_std")))%>% #creating new Variable Names
-  dplyr::select(FIPS, year, State, County, rural, Appalachia, southern, median_mining, #selecting and ordering variables
+coal_data <- cbind(coal_data, setNames(lapply(coal_data[9:27], gel_std),
+                   paste0(names(coal_data)[9:27], "_std")))%>% #creating new Variable Names
+  dplyr::select(FIPS, year, State, County, mortality, coal_prod, rural, Appalachia, southern, median_mining, #selecting and ordering variables
          coal_mining, time, dplyr::ends_with("_std")) 
