@@ -38,7 +38,8 @@ coal_data <- read_csv(file.path("Health_Indicators_County_level.csv"))%>% # Read
          obesity_m = ifelse(is.na(obesity), mean(obesity, na.rm=T), obesity),
          uninsured_m = ifelse(is.na(uninsured), mean(uninsured, na.rm=T), uninsured),
          PopToPCP_m = ifelse((is.na(PopToPCP)|PopToPCP<=0), mean(PopToPCP, na.rm=T), PopToPCP))%>%
-  dplyr::select(everything(), -smoking, -drinking, -obesity, -uninsured, -PopToPCP)# reducing variables to imputed vars
+  dplyr::select(FIPS, year, State, County, mortality, everything(),
+                -smoking, -drinking, -obesity, -uninsured, -PopToPCP)# reducing variables to imputed vars
 
 #Data Engineering
 #rescaling time as counter variable for multilevel modeling
@@ -59,6 +60,6 @@ coal_data$southern <- as.numeric(coal_data$State %in% south)
 
 #Applying standardization to continuous variables
 coal_data <- cbind(coal_data, setNames(lapply(coal_data[7:27], gel_std),
-                   paste0(names(coal_data)[7:27], "_std")))%>% #creating new Variable Names
+                   paste0(names(coal_data)[8:27], "_std")))%>% #creating new Variable Names
   dplyr::select(FIPS, year, State, County, rural, Appalachia, southern, median_mining, #selecting and ordering variables
          coal_mining, time, dplyr::ends_with("_std")) 
