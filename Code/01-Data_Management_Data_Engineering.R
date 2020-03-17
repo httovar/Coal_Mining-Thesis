@@ -12,10 +12,12 @@ gel_std <- function(x){
   (x - mean(x)) / (2 * sd(x))
 }
 
+#Function for mutate all call
+perc_multpl <- function(x) round((x * 100), 3)
 
 
 #Set Working Directory
-setwd(file.path("...", "Data"))
+#setwd(file.path("...", "Data"))
 
 #Data Management ####
 #Reading in Data
@@ -24,6 +26,7 @@ coal_data <- read_csv("Full_Data.csv")
 #joining in health indicator variables from county health ranking
 coal_data <- read_csv(file.path("Health_Indicators_County_level.csv"))%>% # Reading in Data
   filter(FIPS %in% coal_data$FIPS)%>% # Filtering out data that is not part of the coal mining data due to sampling
+  mutate_at(vars(everything(), -FIPS, -starts_with("PopTo")), perc_multpl)%>% #turn into percentages
   pivot_longer(cols = -FIPS, names_to = "year_type", values_to = "value")%>% # transform county data into long format
   separate(year_type, into=c("type","year"), sep = "_")%>% # Seperating name columns into year and type
   pivot_wider(id_cols = c(FIPS, year, type), names_from = type, values_from = value)%>% # transform back to wide format
@@ -34,7 +37,7 @@ coal_data <- read_csv(file.path("Health_Indicators_County_level.csv"))%>% # Read
          drinking_m = ifelse(is.na(drinking), mean(drinking, na.rm=T), drinking), #with state/year means
          obesity_m = ifelse(is.na(obesity), mean(obesity, na.rm=T), obesity),
          uninsured_m = ifelse(is.na(uninsured), mean(uninsured, na.rm=T), uninsured),
-         PopToPCP_m = ifelse(is.na(PopToPCP), mean(PopToPCP, na.rm=T), PopToPCP))%>%
+         PopToPCP_m = ifelse((is.na(PopToPCP)|PopToPCP<=0), mean(PopToPCP, na.rm=T), PopToPCP))%>%
   dplyr::select(everything(), -smoking, -drinking, -obesity, -uninsured, -PopToPCP)# reducing variables to imputed vars
 
 #Data Engineering
