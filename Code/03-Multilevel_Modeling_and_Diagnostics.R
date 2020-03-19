@@ -73,7 +73,57 @@ data.frame(ICC=ICC(full_model), BIC=BIC(full_model), AICc=AICc(full_model))%>%
   pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
   write_csv(path="Data/Tables/Model_Summary/full_model_stats.csv")
 
-#Figure 5 - Coefficient Visualizations #####
+# Outlier Analysis - These calculations take a long time ####
+
+#Cook's Distance for group level.
+#Rather than each observation, each group is excluded
+#Includes a counter variable
+alt_est_a <- influence(full_model, group = "State", count = T)
+
+influence_state <- data.frame(cooks_d = cooks.distance(alt_est_a),
+                              pc_change = pchange(alt_est_a),
+                              sig_test = sigtest(alt_est_a),
+                              df_betas = dfbetas(alt_est_a))
+
+#The function calculates a separate model for every observation in the data set.
+#i.e. 23,952 multilevel models. It took about 18h to run.
+#Rather read in the csv file that contains observation level measures in the repository
+
+#influence_obs <- read_csv("Data/obs_outlier_diag.csv")
+
+alt_est_b <- influence(full_model, obs=T, count = T)
+
+influence_obs <- data.frame(cooks_d = cooks.distance(alt_est_b),
+                            pc_change = pchange(alt_est_b),
+                            sig_test = sigtest(alt_est_b),
+                            df_betas = dfbetas(alt_est_b))
+
+
+#Figure 5 - Cook's D Group-level ####
+
+png("Visualizations/Outlier-Group.png", width = 8.66, height=5.75, units = "in", res = 600)
+
+influence_state%>%
+  mutate(State = row.names(influence_c))%>%
+  ggplot(aes(y=cooks_d, x= as.factor(State)))+ 
+  geom_col()+
+  theme_bw()+
+  geom_hline(yintercept = mean(influence_c$cooks_d))+
+  geom_hline(yintercept = 3*mean(influence_c$cooks_d), linetype=2)+
+  coord_flip()+
+  labs(title = "Multilevel Regression Model, Outlier Analysis",
+       subtitle = "Cook's Distance on Group-Level",
+       y="Cook's Distance",
+       x="State")
+
+dev.off()
+
+#Figure 6 - Cook's D Observation level
+
+
+
+
+#Figure X - Coefficient Visualizations #####
 
 
 
