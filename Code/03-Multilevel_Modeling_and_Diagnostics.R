@@ -290,9 +290,9 @@ full_model%>%
                             "perc_male_std:perc_hisp_std"="Interaction Percent Hispanic/Percent Male",
                             "coal_mining:hs_grad_rate_std"="Interaction HS Grad Rate/Coal Mining",
                             "coal_mining:ba_higher_rate_std"="Interaction BA & Higher/Coal Mining",
-                            "smoking_std" =  "Smoking Rate", "area_std" = "County Size",
-                            "alcohol_std" = "Alcohol Consumption", "obesity_std" = "Obesity Rate",
-                            "perc_hisp_std" = "Percent Hispanic", "phys_access_std" = "Physician Access",
+                            "smoking_m_std" =  "Smoking Rate", "land_area_std" = "County Size",
+                            "drinking_m_std" = "Alcohol Consumption", "obesity_m_std" = "Obesity Rate",
+                            "perc_hisp_std" = "Percent Hispanic", "PopToPCP_m_std" = "Physician Access",
                             "perc_amerin_std" = "Percent Native American", "perc_asian_std" = "Percent Asian" ,
                             "perc_male_std" = "Percent Male", "perc_black_std" = "Percent Black",
                             "ba_higher_rate_std" = "BA or Higher", "total_population_std" ="Total Population",
@@ -301,17 +301,17 @@ full_model%>%
                             "Appalachia" = "Appalachia" , "rural" =" Rural", "unemployment_std" = "Unemployment Rate", 
                             "coal_mining"="Coal Mining" , "median_mining"="Above Median Mining",
                             "time" = "Time", "I(time^2)" = "Time, squared", "southern"="Southern State",
-                            "total_population_std"="Total Population")) +
+                            "uninsured_m_std"="Percent Uninsured")) +
   labs(y="Estimate", x="",
        title = "Multilevel Regression Model Predicting Countylevel Mortality Rates",
-       subtitle="Regression Coefficients and Confidence Intervals, Correlated Model")
+       subtitle="Regression Coefficients and Confidence Intervals, Full Model")
 
 dev.off()
 
 #Figure 7 - Coefficient Visualizations - No Outliers #####
 png("Visualizations/Full-Model-No-Out-Vis.png", width = 8.66, height=5.75, units = "in", res = 600)
 
-full_model%>%
+full_model_no%>%
   tidy(conf.int = TRUE)%>%
   filter(effect =="fixed" & term != "(Intercept)")%>%
   mutate(term = factor(term, levels = term[order(estimate)]),
@@ -329,9 +329,9 @@ full_model%>%
                             "perc_male_std:perc_hisp_std"="Interaction Percent Hispanic/Percent Male",
                             "coal_mining:hs_grad_rate_std"="Interaction HS Grad Rate/Coal Mining",
                             "coal_mining:ba_higher_rate_std"="Interaction BA & Higher/Coal Mining",
-                            "smoking_std" =  "Smoking Rate", "area_std" = "County Size",
-                            "alcohol_std" = "Alcohol Consumption", "obesity_std" = "Obesity Rate",
-                            "perc_hisp_std" = "Percent Hispanic", "phys_access_std" = "Physician Access",
+                            "smoking_m_std" =  "Smoking Rate", "land_area_std" = "County Size",
+                            "drinking_m_std" = "Alcohol Consumption", "obesity_m_std" = "Obesity Rate",
+                            "perc_hisp_std" = "Percent Hispanic", "PopToPCP_m_std" = "Physician Access",
                             "perc_amerin_std" = "Percent Native American", "perc_asian_std" = "Percent Asian" ,
                             "perc_male_std" = "Percent Male", "perc_black_std" = "Percent Black",
                             "ba_higher_rate_std" = "BA or Higher", "total_population_std" ="Total Population",
@@ -340,17 +340,17 @@ full_model%>%
                             "Appalachia" = "Appalachia" , "rural" =" Rural", "unemployment_std" = "Unemployment Rate", 
                             "coal_mining"="Coal Mining" , "median_mining"="Above Median Mining",
                             "time" = "Time", "I(time^2)" = "Time, squared", "southern"="Southern State",
-                            "total_population_std"="Total Population")) +
+                            "uninsured_m_std"="Percent Uninsured")) +
   labs(y="Estimate", x="",
        title = "Multilevel Regression Model Predicting Countylevel Mortality Rates",
-       subtitle="Regression Coefficients and Confidence Intervals, Correlated Model")
+       subtitle="Regression Coefficients and Confidence Intervals, No Outlier Data")
 
 dev.off()
 
 #Figure X - Correlation between Ran Slope and Ran Intercept ####
 png("Visualizations/FIGURE-Corr.png", width = 8.66, height=5.75, units = "in", res = 600)
 
-ranef(full_model)$State%>%
+ranef(full_model_no)$State%>%
   rename(ran_intercept=1, ran_slope=2)%>%
   ggplot(aes(x=ran_intercept, y=ran_slope))+
   geom_point()+
@@ -364,7 +364,7 @@ dev.off()
 #Fig X (App) Correlation Ran_Slop, Ran_Int - full model vs. uncond growth#####
 png("Visualizations/FIGURE-App-Corr_Comp.png", width = 8.66, height=5.75, units = "in", res = 600)
 
-ranef(full_model)$State%>%
+ranef(full_model_no)$State%>%
   rename(ran_intercept_full=1, ran_slope_full=2)%>%
   mutate(ran_intercept_uncond = ranef(uncond_growth_mod_rs)$State[,1],
          ran_slope_uncond = ranef(uncond_growth_mod_rs)$State[,2])%>%
