@@ -98,24 +98,170 @@ influence_obs <- data.frame(cooks_d = cooks.distance(alt_est_b),
                             sig_test = sigtest(alt_est_b),
                             df_betas = dfbetas(alt_est_b))
 
+#Creating dataset with obs-level cook's d and indicator for observations above cut-off
 
-#Figure 5 - Cook's D Group-level ####
+coal_data_mod <- coal_data%>%
+  ungroup()%>%
+  mutate(cooks_d = cooks.distance(alt_est_b),
+         cook_d_out = as.numeric(cooks_d>3*mean(cooks_d)))
 
-png("Visualizations/Outlier-Group.png", width = 8.66, height=5.75, units = "in", res = 600)
+#Replacing mortality values for outliers with NA
+coal_data_mod$mortality[coal_data_mod$cook_d_out==1] <- NA
 
-influence_state%>%
-  mutate(State = row.names(influence_c))%>%
+#create model without outliers
+full_model_no <- lmerTest::lmer(data=coal_data_mod, formula = mortality ~ time + I(time^2) + coal_mining + median_mining + 
+                                   Appalachia + rural + unemployment_std + median_income_std + poverty_rate_std +
+                                   median_age_std + hs_grad_rate_std + ba_higher_rate_std + perc_male_std + 
+                                   perc_black_std + perc_amerin_std + perc_hisp_std + PopToPCP_m_std + drinking_m_std +
+                                   obesity_m_std + smoking_m_std + land_area_std + southern + uninsured_m_std +
+                                   coal_mining:Appalachia + median_mining:Appalachia + perc_hisp_std:perc_male_std +
+                                   hs_grad_rate_std:coal_mining + ba_higher_rate_std:coal_mining +
+                                   (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+#summary(full_model_not)
+
+#influence measure for model w/o outliers
+alt_est_c <- influence(full_model_not, group = "State", count = T)
+
+#Influence measure dataframe 
+influence_state_noout <- data.frame(cooks_d = cooks.distance(alt_est_c),
+                                    pc_change = pchange(alt_est_c),
+                                    sig_test = sigtest(alt_est_c),
+                                    df_betas = dfbetas(alt_est_c))
+
+#Figure 5 - Cook's D Group-level before and after outlier treatment####
+
+p1 <- influence_state%>%
+  mutate(State = row.names(influence_state))%>%
   ggplot(aes(y=cooks_d, x= as.factor(State)))+ 
   geom_col()+
   theme_bw()+
-  geom_hline(yintercept = mean(influence_c$cooks_d))+
-  geom_hline(yintercept = 3*mean(influence_c$cooks_d), linetype=2)+
+  geom_hline(yintercept = mean(influence_state$cooks_d))+
+  geom_hline(yintercept = 3*mean(influence_state$cooks_d), linetype=2)+
   coord_flip()+
-  labs(title = "Multilevel Regression Model, Outlier Analysis",
-       subtitle = "Cook's Distance on Group-Level",
+  labs(title = "Cook's Distance on Group-Level",
+       subtitle = "Prior to Outlier Treatment",
        y="Cook's Distance",
        x="State")
 
+p2 <- influence_state_noout%>%
+  mutate(State = row.names(influence_state_noout))%>%
+  ggplot(aes(y=cooks_d, x= as.factor(State)))+ 
+  geom_col()+
+  geom_hline(yintercept = mean(influence_state$cooks_d))+
+  geom_hline(yintercept = 3*mean(influence_state$cooks_d), linetype=2)+
+  coord_flip()+
+  theme_bw()+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  labs(title = "",
+       subtitle = "Post Outlier Treatment",
+       y="Cook's Distance",
+       x="State")
+
+png("Visualizations/Outlier-Group.png", width = 8.66, height=5.75, units = "in", res = 600)
+gridExtra::grid.arrange(p1, p2, nrow=1)
+dev.off()
+
+# More Plots for Outlier Treatment - Appendix ####
+q1 <- influence_state%>%
+  mutate(State = row.names(influence_state))%>%
+  ggplot(aes(y=df_betas.perc_hisp_std, x= as.factor(State)))+ 
+  geom_col()+
+  theme_bw()+
+  coord_flip()+
+  theme_bw()+
+  labs(title = "Influence on Hispanic Coefficient",
+       subtitle = "Prior Outlier Treatment",
+       y="Difference Beta-Coefficient",
+       x="State")
+
+q2 <- influence_state%>%
+  mutate(State = row.names(influence_state))%>%
+  ggplot(aes(y=df_betas.land_area_std, x= as.factor(State)))+ 
+  geom_col()+
+  theme_bw()+
+  coord_flip()+
+  theme_bw()+
+  labs(title = "Influence on Land Area Coefficient",
+       subtitle = "Prior Outlier Treatment",
+       y="Difference Beta-Coefficient",
+       x="State")
+
+
+q3 <- influence_state_noout%>%
+  mutate(State = row.names(influence_state_noout))%>%
+  ggplot(aes(y=df_betas.perc_hisp_std, x= as.factor(State)))+ 
+  geom_col()+
+  theme_bw()+
+  coord_flip()+
+  theme_bw()+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  theme_bw()+
+  labs(title = "",
+       subtitle = "Post Outlier Treatment",
+       y="Difference Beta-Coefficient",
+       x="State")
+
+
+q4 <- influence_state_noout%>%
+  mutate(State = row.names(influence_state_noout))%>%
+  ggplot(aes(y=df_betas.land_area_std, x= as.factor(State)))+ 
+  geom_col()+
+  theme_bw()+
+  coord_flip()+
+  theme_bw()+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  theme_bw()+
+  labs(title = "",
+       subtitle = "Post Outlier Treatment",
+       y="Difference Beta-Coefficient",
+       x="State")
+
+
+q5 <- influence_state%>%
+  mutate(State = row.names(influence_state))%>%
+  ggplot(aes(y=df_betas.coal_mining.Appalachia, x= as.factor(State)))+ 
+  geom_col()+
+  theme_bw()+
+  coord_flip()+
+  theme_bw()+
+  labs(title = "Influence on Coal:Appalachia",
+       subtitle = "Prior Outlier Treatment",
+       y="Difference Beta-Coefficient",
+       x="State")
+
+
+q6 <- influence_state_noout%>%
+  mutate(State = row.names(influence_state_noout))%>%
+  ggplot(aes(y=df_betas.coal_mining.Appalachia, x= as.factor(State)))+ 
+  geom_col()+
+  theme_bw()+
+  coord_flip()+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  theme_bw()+
+  labs(title = "",
+       subtitle = "Post Outlier Treatment",
+       y="Difference Beta-Coefficient",
+       x="State")
+
+
+png("Visualizations/Appendix-Outlier-Hisp.png", width = 8.66, height=5.75, units = "in", res = 600)
+gridExtra::grid.arrange(q1, q3, nrow=1)
+dev.off()
+
+png("Visualizations/Appendix-Outlier-Area.png", width = 8.66, height=5.75, units = "in", res = 600)
+gridExtra::grid.arrange(q2, q4, nrow=1)
+dev.off()
+
+png("Visualizations/Appendix-Outlier-coal_int.png", width = 8.66, height=5.75, units = "in", res = 600)
+gridExtra::grid.arrange(q5, q6, nrow=1)
 dev.off()
 
 #Figure 6 - Cook's D Observation level
@@ -123,10 +269,83 @@ dev.off()
 
 
 
-#Figure X - Coefficient Visualizations #####
+#Figure 6 - Coefficient Visualizations Full Model/Full Data#####
+png("Visualizations/Full-Model-Vis.png", width = 8.66, height=5.75, units = "in", res = 600)
 
+full_model%>%
+  tidy(conf.int = TRUE)%>%
+  filter(effect =="fixed" & term != "(Intercept)")%>%
+  mutate(term = factor(term, levels = term[order(estimate)]),
+         significance = as.factor(as.numeric(p.value <= 0.05)))%>%
+  ggplot(aes(x = term, y = estimate,
+             ymin = conf.low,
+             ymax = conf.high)) +
+  theme_minimal() +
+  geom_hline(yintercept = 0.0, color = 'red', size = 1.0) +
+  geom_point(aes(color=significance), show.legend = F) +
+  geom_linerange() + coord_flip() + 
+  #including new labels and order of labels
+  scale_x_discrete(labels=c("coal_mining:Appalachia"="Interaction Coal Mining/Appalachia",
+                            "median_mining:Appalachia"="Interaction Median Mining/Appalachia",
+                            "perc_male_std:perc_hisp_std"="Interaction Percent Hispanic/Percent Male",
+                            "coal_mining:hs_grad_rate_std"="Interaction HS Grad Rate/Coal Mining",
+                            "coal_mining:ba_higher_rate_std"="Interaction BA & Higher/Coal Mining",
+                            "smoking_std" =  "Smoking Rate", "area_std" = "County Size",
+                            "alcohol_std" = "Alcohol Consumption", "obesity_std" = "Obesity Rate",
+                            "perc_hisp_std" = "Percent Hispanic", "phys_access_std" = "Physician Access",
+                            "perc_amerin_std" = "Percent Native American", "perc_asian_std" = "Percent Asian" ,
+                            "perc_male_std" = "Percent Male", "perc_black_std" = "Percent Black",
+                            "ba_higher_rate_std" = "BA or Higher", "total_population_std" ="Total Population",
+                            "median_age_std" = "Median Age", "hs_grad_rate_std" = "High School Grad Rate",
+                            "median_income_std" = "Median Income" , "poverty_rate_std" = "Poverty Rate",
+                            "Appalachia" = "Appalachia" , "rural" =" Rural", "unemployment_std" = "Unemployment Rate", 
+                            "coal_mining"="Coal Mining" , "median_mining"="Above Median Mining",
+                            "time" = "Time", "I(time^2)" = "Time, squared", "southern"="Southern State",
+                            "total_population_std"="Total Population")) +
+  labs(y="Estimate", x="",
+       title = "Multilevel Regression Model Predicting Countylevel Mortality Rates",
+       subtitle="Regression Coefficients and Confidence Intervals, Correlated Model")
 
+dev.off()
 
+#Figure 7 - Coefficient Visualizations - No Outliers #####
+png("Visualizations/Full-Model-No-Out-Vis.png", width = 8.66, height=5.75, units = "in", res = 600)
+
+full_model%>%
+  tidy(conf.int = TRUE)%>%
+  filter(effect =="fixed" & term != "(Intercept)")%>%
+  mutate(term = factor(term, levels = term[order(estimate)]),
+         significance = as.factor(as.numeric(p.value <= 0.05)))%>%
+  ggplot(aes(x = term, y = estimate,
+             ymin = conf.low,
+             ymax = conf.high)) +
+  theme_minimal() +
+  geom_hline(yintercept = 0.0, color = 'red', size = 1.0) +
+  geom_point(aes(color=significance), show.legend = F) +
+  geom_linerange() + coord_flip() + 
+  #including new labels and order of labels
+  scale_x_discrete(labels=c("coal_mining:Appalachia"="Interaction Coal Mining/Appalachia",
+                            "median_mining:Appalachia"="Interaction Median Mining/Appalachia",
+                            "perc_male_std:perc_hisp_std"="Interaction Percent Hispanic/Percent Male",
+                            "coal_mining:hs_grad_rate_std"="Interaction HS Grad Rate/Coal Mining",
+                            "coal_mining:ba_higher_rate_std"="Interaction BA & Higher/Coal Mining",
+                            "smoking_std" =  "Smoking Rate", "area_std" = "County Size",
+                            "alcohol_std" = "Alcohol Consumption", "obesity_std" = "Obesity Rate",
+                            "perc_hisp_std" = "Percent Hispanic", "phys_access_std" = "Physician Access",
+                            "perc_amerin_std" = "Percent Native American", "perc_asian_std" = "Percent Asian" ,
+                            "perc_male_std" = "Percent Male", "perc_black_std" = "Percent Black",
+                            "ba_higher_rate_std" = "BA or Higher", "total_population_std" ="Total Population",
+                            "median_age_std" = "Median Age", "hs_grad_rate_std" = "High School Grad Rate",
+                            "median_income_std" = "Median Income" , "poverty_rate_std" = "Poverty Rate",
+                            "Appalachia" = "Appalachia" , "rural" =" Rural", "unemployment_std" = "Unemployment Rate", 
+                            "coal_mining"="Coal Mining" , "median_mining"="Above Median Mining",
+                            "time" = "Time", "I(time^2)" = "Time, squared", "southern"="Southern State",
+                            "total_population_std"="Total Population")) +
+  labs(y="Estimate", x="",
+       title = "Multilevel Regression Model Predicting Countylevel Mortality Rates",
+       subtitle="Regression Coefficients and Confidence Intervals, Correlated Model")
+
+dev.off()
 
 #Figure X - Correlation between Ran Slope and Ran Intercept ####
 png("Visualizations/FIGURE-Corr.png", width = 8.66, height=5.75, units = "in", res = 600)
