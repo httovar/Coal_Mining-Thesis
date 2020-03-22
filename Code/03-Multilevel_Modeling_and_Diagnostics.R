@@ -9,6 +9,9 @@ library(broom.mixed)
 library(tidyr)
 library(AICcmodavg)
 library(reghelper)
+library(influence.ME)
+
+
  
 #unconditional mean model####
 uncond_mean_mod <- lmer(data=coal_data, mortality ~ 1 + (1|State))
@@ -19,7 +22,7 @@ tidy(uncond_mean_mod)%>%
 
 #Additional Measures
 #Intra Class Correlation Coefficient, BIC, AICc
-data.frame(ICC=ICC(uncond_mean_mod), BIC=BIC(uncond_mean_mod), AICc=AICc(uncond_mean_mod))%>%
+data.frame(ICC=reghelper::ICC(uncond_mean_mod), BIC=BIC(uncond_mean_mod), AICc=AICc(uncond_mean_mod))%>%
   pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
   write_csv(path="Data/Tables/Model_Summary/01-uncond_mean_mod_stats.csv")
 
@@ -33,7 +36,7 @@ tidy(uncond_growth_mod)%>%
 
 #Additional Measures
 #Intra Class Correlation Coefficient, BIC, AICc
-data.frame(ICC=ICC(uncond_growth_mod), BIC=BIC(uncond_growth_mod), AICc=AICc(uncond_growth_mod))%>%
+data.frame(ICC=reghelper::ICC(uncond_growth_mod), BIC=BIC(uncond_growth_mod), AICc=AICc(uncond_growth_mod))%>%
   pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
   write_csv(path="Data/Tables/Model_Summary/02-uncond_growth_mod_stats.csv")
 
@@ -46,7 +49,7 @@ tidy(uncond_growth_mod_rs)%>%
 
 #Additional Measures
 #Intra Class Correlation Coefficient, BIC, AICc
-data.frame(ICC=ICC(uncond_growth_mod_rs), BIC=BIC(uncond_growth_mod_rs), AICc=AICc(uncond_growth_mod_rs))%>%
+data.frame(ICC=reghelper::ICC(uncond_growth_mod_rs), BIC=BIC(uncond_growth_mod_rs), AICc=AICc(uncond_growth_mod_rs))%>%
   pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
   write_csv(path="Data/Tables/Model_Summary/02a-uncond_growth_mod_rs_stats.csv")
 
@@ -62,14 +65,14 @@ full_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ time + I(time
                                hs_grad_rate_std:coal_mining + ba_higher_rate_std:coal_mining +
                                (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
 
-summary(full_model)
+#summary(full_model)
 #Creating CSV file with model coefficients for Full Summary in Appendix
 tidy(full_model)%>%
   write_csv(path="Data/Tables/Model_Summary/full_model_coef.csv")
 
 #Additional Measures
 #Intra Class Correlation Coefficient, BIC, AICc
-data.frame(ICC=ICC(full_model), BIC=BIC(full_model), AICc=AICc(full_model))%>%
+data.frame(ICC=reghelper::ICC(full_model), BIC=BIC(full_model), AICc=AICc(full_model))%>%
   pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
   write_csv(path="Data/Tables/Model_Summary/full_model_stats.csv")
 
@@ -87,25 +90,31 @@ influence_state <- data.frame(cooks_d = cooks.distance(alt_est_a),
 
 #The function calculates a separate model for every observation in the data set.
 #i.e. 23,952 multilevel models. It took about 18h to run.
-#Rather read in the csv file that contains observation level measures in the repository
 
-#influence_obs <- read_csv("Data/obs_outlier_diag.csv")
-
-alt_est_b <- influence(full_model, obs=T, count = T)
-
-influence_obs <- data.frame(cooks_d = cooks.distance(alt_est_b),
-                            pc_change = pchange(alt_est_b),
-                            sig_test = sigtest(alt_est_b),
-                            df_betas = dfbetas(alt_est_b))
+#alt_est_b <- influence(full_model, obs=T, count = T)
+#influence_obs <- data.frame(cooks_d = cooks.distance(alt_est_b),
+#                            pc_change = pchange(alt_est_b),
+#                            sig_test = sigtest(alt_est_b),
+#                            df_betas = dfbetas(alt_est_b))
 
 #Creating dataset with obs-level cook's d and indicator for observations above cut-off
 
-coal_data_mod <- coal_data%>%
+#coal_data_mod <- coal_data%>%
+#  ungroup()%>%
+#  mutate(cooks_d = cooks.distance(alt_est_b),
+#         cook_d_out = as.numeric(cooks_d>3*mean(cooks_d)))
+
+#Rather read in the csv file that contains observation level measures in the repository
+influence_obs <- read_csv("Data/obs_outlier_diag.csv")
+
+#Creating dataset with obs-level cook's d and indicator for observations above cut-off
+coal_data <- coal_data%>%
   ungroup()%>%
-  mutate(cooks_d = cooks.distance(alt_est_b),
+  mutate(cooks_d = influence_obs$cooks_d,
          cook_d_out = as.numeric(cooks_d>3*mean(cooks_d)))
 
 #Replacing mortality values for outliers with NA
+coal_data_mod <- coal_data
 coal_data_mod$mortality[coal_data_mod$cook_d_out==1] <- NA
 
 #create model without outliers
@@ -115,12 +124,27 @@ full_model_no <- lmerTest::lmer(data=coal_data_mod, formula = mortality ~ time +
                                    perc_black_std + perc_amerin_std + perc_hisp_std + PopToPCP_m_std + drinking_m_std +
                                    obesity_m_std + smoking_m_std + land_area_std + southern + uninsured_m_std +
                                    coal_mining:Appalachia + median_mining:Appalachia + perc_hisp_std:perc_male_std +
-                                   hs_grad_rate_std:coal_mining + ba_higher_rate_std:coal_mining +
+                                   hs_grad_rate_std:coal_mining + ba_higher_rate_std:coal_mining  +
                                    (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
-#summary(full_model_not)
+summary(full_model_no)
+
+#Creating CSV file with model coefficients for Full Summary in Appendix
+tidy(full_model_no)%>%
+  write_csv(path="Data/Tables/Model_Summary/full_model_no_coef.csv")
+
+#Additional Measures
+#Intra Class Correlation Coefficient, BIC, AICc
+data.frame(ICC=reghelper::ICC(full_model_no), BIC=BIC(full_model_no), AICc=AICc(full_model_no))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/full_model_no_stats.csv")
+
+
+
+
+
 
 #influence measure for model w/o outliers
-alt_est_c <- influence(full_model_not, group = "State", count = T)
+alt_est_c <- influence(full_model_no, group = "State", count = T)
 
 #Influence measure dataframe 
 influence_state_noout <- data.frame(cooks_d = cooks.distance(alt_est_c),
@@ -162,6 +186,48 @@ p2 <- influence_state_noout%>%
 png("Visualizations/Outlier-Group.png", width = 8.66, height=5.75, units = "in", res = 600)
 gridExtra::grid.arrange(p1, p2, nrow=1)
 dev.off()
+
+#Table 3 - Summary Statistics, Observation-Level Influence Measures####
+influence_obs%>%
+  summarize(max_cook_d = max(cooks_d),
+            min_cook_d = min(cooks_d),
+            mean_cook_d = mean(cooks_d),
+            median_cook_d = median(cooks_d),
+            sd_cook = sd(cooks_d),
+            outliers_sum = sum(cooks_d>3*mean(cooks_d)))%>%
+  write_csv("Data/Tables/table_3-outlier.csv")
+
+#Tables for Appendix Summary Statistics for Excluded Influential Observations ####
+county_n <- coal_data%>%
+  filter(year==2010)%>%
+  group_by(State)%>%
+  summarise(n_one = length(County),
+            n_total= n*8)
+
+coal_data%>%
+  filter(cook_d_out ==1)%>%
+  group_by(State)%>%
+  summarise(n_county = length(County),
+            mean_mort = mean(mortality),
+            prob_mining = mean(coal_mining),
+            mean_perc_hisp_std = mean(perc_hisp_std),
+            mean_area = mean(land_area_std))%>%
+  inner_join(county_n, by = "State")%>%
+  mutate(reduc_n_county = n_county/n_total)%>%
+  write_csv("Data/Tables/table_App-outlier-State_sum.csv")
+
+
+
+coal_data%>%
+  filter(cook_d_out ==1)%>%
+  group_by(year)%>%
+  summarise(n_county = length(County),
+            reduc_n_county =length(County)/2994, 
+            mean_mort = mean(mortality),
+            prob_mining = mean(coal_mining),
+            mean_perc_hisp_std = mean(perc_hisp_std),
+            mean_area = mean(land_area_std))%>%
+  write_csv("Data/Tables/table_App-outlier-year_sum.csv")
 
 # More Plots for Outlier Treatment - Appendix ####
 q1 <- influence_state%>%
@@ -280,7 +346,7 @@ full_model%>%
   ggplot(aes(x = term, y = estimate,
              ymin = conf.low,
              ymax = conf.high)) +
-  theme_minimal() +
+  theme_bw() +
   geom_hline(yintercept = 0.0, color = 'red', size = 1.0) +
   geom_point(aes(color=significance), show.legend = F) +
   geom_linerange() + coord_flip() + 
@@ -308,7 +374,7 @@ full_model%>%
 
 dev.off()
 
-#Figure 7 - Coefficient Visualizations - No Outliers #####
+#Figure X - Coefficient Visualizations - No Outliers #####
 png("Visualizations/Full-Model-No-Out-Vis.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 full_model_no%>%
@@ -319,7 +385,7 @@ full_model_no%>%
   ggplot(aes(x = term, y = estimate,
              ymin = conf.low,
              ymax = conf.high)) +
-  theme_minimal() +
+  theme_bw() +
   geom_hline(yintercept = 0.0, color = 'red', size = 1.0) +
   geom_point(aes(color=significance), show.legend = F) +
   geom_linerange() + coord_flip() + 
@@ -342,15 +408,29 @@ full_model_no%>%
                             "time" = "Time", "I(time^2)" = "Time, squared", "southern"="Southern State",
                             "uninsured_m_std"="Percent Uninsured")) +
   labs(y="Estimate", x="",
-       title = "Multilevel Regression Model Predicting Countylevel Mortality Rates",
+       title = "Multilevel Regression Model Predicting County-level Mortality Rates",
        subtitle="Regression Coefficients and Confidence Intervals, No Outlier Data")
+
+dev.off()
+
+# Figure 7 - Correlation slope intercept, no outliers ####
+png("Visualizations/FIGURE-Corr-no_out.png", width = 8.66, height=5.75, units = "in", res = 600)
+
+ranef(full_model_no)$State%>%
+  rename(ran_intercept=1, ran_slope=2)%>%
+  ggplot(aes(x=ran_intercept, y=ran_slope))+
+  geom_point()+
+  labs(title = "Full Multilevel Regression Model, All Groups",
+       subtitle = "Random Intercept Values vs. Random Slope Values",
+       x="Random Intercept", y="Random Slope")+
+  theme_bw()
 
 dev.off()
 
 #Figure X - Correlation between Ran Slope and Ran Intercept ####
 png("Visualizations/FIGURE-Corr.png", width = 8.66, height=5.75, units = "in", res = 600)
 
-ranef(full_model_no)$State%>%
+ranef(full_model)$State%>%
   rename(ran_intercept=1, ran_slope=2)%>%
   ggplot(aes(x=ran_intercept, y=ran_slope))+
   geom_point()+
@@ -378,3 +458,87 @@ ranef(full_model_no)$State%>%
   theme_bw()
 
 dev.off()
+
+#Diagnostics ####
+#Add Diagnostics to data set
+coal_data_diag <- coal_data%>%
+  filter(cook_d_out == 0)%>%
+  ungroup()%>%
+  mutate(resid_value = residuals(full_model_no),
+         fit_value = fitted(full_model_no))
+#Figure X - Fitted vs. y-Values  and total distribution####
+png("Visualizations/Diag-Fit_vs_Mort.png", width = 8.66, height=5.75, units = "in", res = 600)
+
+q1<-coal_data_diag%>%
+  ggplot(aes(x=mortality, y=fit_value))+
+  geom_point()+
+  theme_bw()+
+  labs(title = "Regression Diagnostics Plot",
+       subtitle = "Fitted Values vs. Actual Values",
+       y= "Fitted Values", x="Mortality")
+
+q2 <- coal_data_diag%>%
+ggplot(aes(x = resid_value)) + 
+  geom_density() +
+  geom_vline(xintercept = mean(coal_data_diag$resid_value), size=0.5, color="blaCK", linetype=2)+
+  geom_text(aes(x= mean(resid_value), label="Mean Value", y=0.0025), colour="black", hjust = -0.1)+
+  theme_bw()+
+  labs(title = "Multilevel Regression Model Predicting Countylevel Mortality Rates",
+       subtitle="Total Residual Distribution",
+       x="Residual Value",
+       y="Density")
+
+grid.arrange(q1, q2, nrow=2)
+dev.off()
+
+#Figure App. Residuals Facetted by year ####
+coal_data_mod%>%
+  ggplot(aes(x=fit_value, y=resid_value))+
+  geom_point()+
+  facet_wrap(~year, scales = "free")+
+  theme_bw()+
+  labs(title = "Regression Model Diagnostics",
+       subtitle = "Residuals vs. Fitted Values, Facetted by Year",
+       x="Fitted Value",
+       y="Residual Value")
+
+
+#Residuals by state ####
+#Creating list of all states
+state_list <- as.data.frame(table(coal_data_diag$State))[,1]
+#creating sequence list
+interval_sq <- seq(from=1, to=51, by=9)
+
+
+for(i in 1:6){
+
+  coal_data_mod%>%
+    filter(State %in% state_list[interval_sq[i]:(interval_sq[i]+8)])%>% 
+    ggplot(aes(x=fit_value, y=resid_value))+
+    geom_point()+
+    facet_wrap(~State, scales = "free", nrow=3)+
+    theme_bw()+
+    labs(title = "Regression Model Diagnostics",
+         subtitle = "Residuals vs. Fitted Values, Facetted by Year",
+         x="Fitted Value",
+         y="Residual Value")
+  
+  ggsave(paste("Visualizations/Residual_states/State", interval_sq[i],"-",(interval_sq[i]+8),".png" ,sep = ""),
+         width = 8.66, height=5.75, units = "in", dpi = 600)
+}
+
+
+for(i in 1:6){
+  
+  coal_data_mod%>%
+    filter(State %in% state_list[interval_sq[i]:(interval_sq[i]+8)])%>% 
+    ggplot(aes(x=resid_value))+
+    geom_density()+
+    facet_wrap(~State, scales = "free", nrow=3)+
+    theme_bw()+
+    labs(title = "Regression Model Diagnostics",
+         subtitle = "Residuals vs. Fitted Values, Facetted by Year",
+         x="Fitted Value",
+         y="Residual Value")
+  ggsave(paste("Residual_states_Density", interval_sq[i],"-",(interval_sq[i]+8),".png" ,sep = ""))
+}

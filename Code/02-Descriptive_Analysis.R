@@ -119,7 +119,7 @@ read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>%
          uninsured_m = ifelse(is.na(uninsured), mean(uninsured, na.rm=T), uninsured),
          PopToPCP_m = ifelse((is.na(PopToPCP)|PopToPCP<=0), mean(PopToPCP, na.rm=T), PopToPCP))%>%
   ungroup()%>%
-  dplyr::select(coal_prod, land_area, coal_prod, mortality, unemployment,                 #Selecting varibles for desc
+  dplyr::select(coal_prod, land_area, mortality, unemployment,                 #Selecting varibles for desc
                 median_income, poverty_rate, median_age, hs_grad_rate, ba_higher_rate,
                 perc_male, perc_black, perc_amerin, perc_hisp, smoking_m, drinking_m,
                 obesity_m, uninsured_m, PopToPCP_m)%>%
@@ -164,4 +164,3 @@ coal_data%>%
        caption = "Grey = Percentage Black, Blue = Percentage Hipsanic, Green = Percentage American Indian")+
   theme_bw()
 dev.off()
-
