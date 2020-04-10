@@ -1,0 +1,7 @@
+effect,group,term,estimate,std.error,statistic,df,p.value
+fixed,NA,(Intercept),788.4822839464741,12.963215908438842,60.82458932379465,50.09210271611761,1.290141687739943e-48
+fixed,NA,median_mining,69.66779667232801,18.98320312723414,3.6699705632069812,18.20286606267921,0.001725152834274095
+ran_pars,State,sd__(Intercept),91.99735712359603,NA,NA,NA,NA
+ran_pars,State,sd__median_mining,79.66475833572419,NA,NA,NA,NA
+ran_pars,State,cor__(Intercept).median_mining,-0.12500257712164586,NA,NA,NA,NA
+ran_pars,Residual,sd__Observation,121.29797371410159,NA,NA,NA,NA

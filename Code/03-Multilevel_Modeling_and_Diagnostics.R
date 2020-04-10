@@ -76,6 +76,106 @@ data.frame(ICC=reghelper::ICC(full_model), BIC=BIC(full_model), AICc=AICc(full_m
   pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
   write_csv(path="Data/Tables/Model_Summary/full_model_stats.csv")
 
+#Footnote Table 11 - Other models of model selection process####
+#mortality = f(coal mining, Appalachia)
+cm_app_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ coal_mining + Appalachia + 
+                                  (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+
+#summary(cm_app_model)
+#Creating CSV file with model coefficients for Full Summary in Appendix
+tidy(cm_app_model)%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_app_model_coef.csv")
+
+#Additional Measures
+#Intra Class Correlation Coefficient, BIC, AICc
+data.frame(ICC=reghelper::ICC(cm_app_model), AICc=AICc(cm_app_model), BIC=BIC(cm_app_model))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_app_model_stats.csv")
+
+
+#mortality = f(above median mining)
+amm_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ median_mining + 
+                               (median_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+
+#summary(amm_model)
+#Creating CSV file with model coefficients for Full Summary in Appendix
+tidy(amm_model)%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/amm_model_coef.csv")
+
+#Additional Measures
+#Intra Class Correlation Coefficient, BIC, AICc
+data.frame(ICC=reghelper::ICC(amm_model), AICc=AICc(amm_model), BIC=BIC(amm_model))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/amm_model_stats.csv")
+
+#mortality = f(above median mining, Appalachia)
+amm_app_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ median_mining + Appalachia + 
+                              (median_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+
+#summary(amm_app_model)
+#Creating CSV file with model coefficients for Full Summary in Appendix
+tidy(amm_app_model)%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/amm_app_model_coef.csv")
+
+#Additional Measures
+#Intra Class Correlation Coefficient, BIC, AICc
+data.frame(ICC=reghelper::ICC(amm_app_model), AICc=AICc(amm_app_model), BIC=BIC(amm_app_model))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/amm_app_model_stats.csv")
+
+#mortality = f(coal mining, above median mining, Appalachia)
+cm_amm_app_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ coal_mining + median_mining + Appalachia + 
+                                 (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+
+#summary(cm_amm_app_model)
+#Creating CSV file with model coefficients for Full Summary in Appendix
+tidy(cm_amm_app_model)%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_amm_app_model_coef.csv")
+
+#Additional Measures
+#Intra Class Correlation Coefficient, BIC, AICc
+data.frame(ICC=reghelper::ICC(cm_amm_app_model), AICc=AICc(cm_amm_app_model), BIC=BIC(cm_amm_app_model))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_amm_app_model_stats.csv")
+
+#mortality = f(coal mining, above median mining, Appalachia, coal mining * Appalachia, above median mining * Appalachia)
+cm_amm_app_int_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ coal_mining + median_mining + Appalachia +
+                                     coal_mining:Appalachia + median_mining:Appalachia +
+                                     (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+
+#summary(cm_amm_app_int_model)
+#Creating CSV file with model coefficients for Full Summary in Appendix
+tidy(cm_amm_app_int_model)%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_amm_app_int_model_coef.csv")
+
+#Additional Measures
+#Intra Class Correlation Coefficient, BIC, AICc
+data.frame(ICC=reghelper::ICC(cm_amm_app_int_model), AICc=AICc(cm_amm_app_int_model), BIC=BIC(cm_amm_app_int_model))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_amm_app_int_model_stats.csv")
+
+#mortality = f(coal mining, above median mining, Appalachia, coal mining * Appalachia,
+#above median mining * Appalachia, demographics)
+cm_amm_app_int_dems_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ coal_mining + median_mining + Appalachia +
+                                         unemployment_std + median_income_std + poverty_rate_std + median_age_std + 
+                                         hs_grad_rate_std + ba_higher_rate_std + perc_male_std + 
+                                         perc_black_std + perc_amerin_std + perc_hisp_std +
+                                         coal_mining:Appalachia + median_mining:Appalachia +
+                                         (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+
+
+
+#summary(cm_amm_app_int_dems_model)
+#Creating CSV file with model coefficients for Full Summary in Appendix
+tidy(cm_amm_app_int_dems_model)%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_amm_app_int_dems_model_coef.csv")
+
+#Additional Measures
+#Intra Class Correlation Coefficient, BIC, AICc
+data.frame(ICC=reghelper::ICC(cm_amm_app_int_dems_model), AICc=AICc(cm_amm_app_int_dems_model), BIC=BIC(cm_amm_app_int_dems_model))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_amm_app_int_dems_model_stats.csv")
+
 # Outlier Analysis - These calculations take a long time ####
 
 #Cook's Distance for group level.
@@ -467,7 +567,6 @@ coal_data_diag <- coal_data%>%
   mutate(resid_value = residuals(full_model_no),
          fit_value = fitted(full_model_no))
 #Figure X - Fitted vs. y-Values  and total distribution####
-png("Visualizations/Diag-Fit_vs_Mort.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 q1<-coal_data_diag%>%
   ggplot(aes(x=mortality, y=fit_value))+
@@ -488,20 +587,35 @@ ggplot(aes(x = resid_value)) +
        x="Residual Value",
        y="Density")
 
+png("Visualizations/Diag-Fit_vs_Mort.png", width = 8.66, height=5.75, units = "in", res = 600)
 grid.arrange(q1, q2, nrow=2)
 dev.off()
 
-#Figure App. Residuals Facetted by year ####
+# Figure X - Fitted vs. Residuals
+png("Visualizations/Diag-Fit_vs_Resid.png", width = 8.66, height=5.75, units = "in", res = 600)
+coal_data_diag%>%
+  ggplot(aes(x=resid_value, y=fit_value))+
+  geom_point()+
+  theme_bw()+
+  labs(title = "Regression Diagnostics Plot",
+       subtitle = "Fitted Values vs. Residual Values",
+       y= "Fitted Values", x="Residual Values")
+
+dev.off()
+
+#Figure App. Residuals Faceted by year ####
+png("Visualizations/Diag-by-Year.png", width = 8.66, height=5.75, units = "in", res = 600)
+
 coal_data_mod%>%
-  ggplot(aes(x=fit_value, y=resid_value))+
+  ggplot(aes(y=fit_value, x=resid_value))+
   geom_point()+
   facet_wrap(~year, scales = "free")+
   theme_bw()+
   labs(title = "Regression Model Diagnostics",
        subtitle = "Residuals vs. Fitted Values, Facetted by Year",
-       x="Fitted Value",
-       y="Residual Value")
-
+       y="Fitted Value",
+       x="Residual Value")
+dev.off()
 
 #Residuals by state ####
 #Creating list of all states
@@ -509,7 +623,7 @@ state_list <- as.data.frame(table(coal_data_diag$State))[,1]
 #creating sequence list
 interval_sq <- seq(from=1, to=51, by=9)
 
-
+#residual plots - Fitted vs. Residual
 for(i in 1:6){
 
   coal_data_mod%>%
@@ -527,7 +641,7 @@ for(i in 1:6){
          width = 8.66, height=5.75, units = "in", dpi = 600)
 }
 
-
+#Residual plots - Residual Density
 for(i in 1:6){
   
   coal_data_mod%>%
@@ -540,5 +654,13 @@ for(i in 1:6){
          subtitle = "Residuals vs. Fitted Values, Facetted by Year",
          x="Fitted Value",
          y="Residual Value")
-  ggsave(paste("Residual_states_Density", interval_sq[i],"-",(interval_sq[i]+8),".png" ,sep = ""))
+
+  ggsave(paste("Visualizations/Residual_states/Residual_states_Density", interval_sq[i],"-",(interval_sq[i]+8),
+               ".png" ,sep = ""), width = 8.66, height=5.75, units = "in", dpi = 600)
+  
 }
+
+#Random Effect Diagnostics ####
+png("Visualizations/RanEf-Diag.png", width = 8.66, height=5.75, units = "in", res = 600)
+plotREsim(REsim(full_model_no), stat = "median", level = 0.95)  # plot the interval estimates
+dev.off()

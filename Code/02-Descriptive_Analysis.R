@@ -130,6 +130,20 @@ read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>%
   spread(stat, val) %>%
   write_csv("Data/Tables/table_2-quant.csv")
 
+
+#Footnote on missing values
+read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>% 
+  filter(FIPS %in% read_csv("Data/Full_Data.csv")$FIPS)%>%
+  dplyr::select(everything(), -FIPS)%>%
+  sapply(function(x) sum(is.na(x)))%>%
+  as.data.frame()%>%
+  View()
+  summarise(mean_na = mean(.),
+            dist = median(.),
+            max= max(.),
+            min= min(.))
+  
+
 #Table Appendix - Descriptives of non-continuous variables Variables by State ####
 descr_ind <- coal_data%>%
   ungroup()%>%
