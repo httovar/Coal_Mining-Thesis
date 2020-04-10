@@ -1,7 +1,7 @@
 ##### CODE FILE FOR COAL MINING THESIS PROJECT ######
 ## CODE FILE 3 - Multilevel Modeling and Diagnostics
 
-#Set up required packages
+#Set up required packages####
 library(lme4)
 library(lmerTest)
 library(AICcmodavg)
@@ -12,8 +12,8 @@ library(reghelper)
 library(influence.ME)
 
 
- 
-#unconditional mean model####
+#Table 11 Model Selection Process####
+#unconditional mean model
 uncond_mean_mod <- lmer(data=coal_data, mortality ~ 1 + (1|State))
 #summary(uncond_mean_mod)
 #Creating CSV file with model coefficients for Full Summary in Appendix
@@ -27,7 +27,7 @@ data.frame(ICC=reghelper::ICC(uncond_mean_mod), BIC=BIC(uncond_mean_mod), AICc=A
   write_csv(path="Data/Tables/Model_Summary/01-uncond_mean_mod_stats.csv")
 
 
-#unconditional growth model####
+#unconditional growth model
 #Fixed Slope but random intercept
 uncond_growth_mod <- lmer(data=coal_data, formula = mortality ~ coal_mining + (1|State))
 #summary(uncond_growth_mod)
@@ -55,7 +55,7 @@ data.frame(ICC=reghelper::ICC(uncond_growth_mod_rs), BIC=BIC(uncond_growth_mod_r
 
 
 
-#Full Model #####
+#Full Model
 full_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ time + I(time^2) + coal_mining + median_mining + 
                                Appalachia + rural + unemployment_std + median_income_std + poverty_rate_std +
                                median_age_std + hs_grad_rate_std + ba_higher_rate_std + perc_male_std + 
@@ -95,7 +95,7 @@ data.frame(ICC=reghelper::ICC(cm_app_model), AICc=AICc(cm_app_model), BIC=BIC(cm
 
 #mortality = f(above median mining)
 amm_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ median_mining + 
-                               (median_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+                               (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
 
 #summary(amm_model)
 #Creating CSV file with model coefficients for Full Summary in Appendix
@@ -110,7 +110,7 @@ data.frame(ICC=reghelper::ICC(amm_model), AICc=AICc(amm_model), BIC=BIC(amm_mode
 
 #mortality = f(above median mining, Appalachia)
 amm_app_model <- lmerTest::lmer(data=coal_data, formula = mortality ~ median_mining + Appalachia + 
-                              (median_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
+                              (coal_mining|State), control=lmerControl(optCtrl=list(maxfun=200000)))
 
 #summary(amm_app_model)
 #Creating CSV file with model coefficients for Full Summary in Appendix
@@ -217,7 +217,7 @@ coal_data <- coal_data%>%
 coal_data_mod <- coal_data
 coal_data_mod$mortality[coal_data_mod$cook_d_out==1] <- NA
 
-#create model without outliers
+#Full model without outliers (Table 4)#####
 full_model_no <- lmerTest::lmer(data=coal_data_mod, formula = mortality ~ time + I(time^2) + coal_mining + median_mining + 
                                    Appalachia + rural + unemployment_std + median_income_std + poverty_rate_std +
                                    median_age_std + hs_grad_rate_std + ba_higher_rate_std + perc_male_std + 
@@ -239,14 +239,10 @@ data.frame(ICC=reghelper::ICC(full_model_no), BIC=BIC(full_model_no), AICc=AICc(
   write_csv(path="Data/Tables/Model_Summary/full_model_no_stats.csv")
 
 
-
-
-
-
 #influence measure for model w/o outliers
 alt_est_c <- influence(full_model_no, group = "State", count = T)
 
-#Influence measure dataframe 
+#Influence measure data frame 
 influence_state_noout <- data.frame(cooks_d = cooks.distance(alt_est_c),
                                     pc_change = pchange(alt_est_c),
                                     sig_test = sigtest(alt_est_c),
