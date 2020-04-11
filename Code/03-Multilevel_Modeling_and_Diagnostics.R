@@ -613,6 +613,68 @@ coal_data_mod%>%
        x="Residual Value")
 dev.off()
 
+#Figure 12 - Model Comparison####
+#Creating pooled OLS model
+pool_model <- lm(data=coal_data,  formula = mortality ~ coal_mining + median_mining + 
+                   Appalachia + rural + unemployment_std + median_income_std + poverty_rate_std +
+                   median_age_std + hs_grad_rate_std + ba_higher_rate_std + perc_male_std + 
+                   perc_black_std + perc_amerin_std + perc_hisp_std + PopToPCP_m_std + drinking_m_std +
+                   obesity_m_std + smoking_m_std + land_area_std + southern + uninsured_m_std +
+                   coal_mining:Appalachia + median_mining:Appalachia + perc_hisp_std:perc_male_std +
+                   hs_grad_rate_std:coal_mining + ba_higher_rate_std:coal_mining)
+#summary(pool_model)
+#Regression Output
+tidy(pool_model)%>%
+  write_csv(path="Data/Tables/Model_Summary/pool_model_coef.csv")
+#Additional Measures
+#BIC, AICc (There is no ICC for pooled data)
+data.frame(AICc=AICc(pool_model), BIC=BIC(pool_model))%>%
+  pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
+  write_csv(path="Data/Tables/Model_Summary/pool_model_stats.csv")
+#Create diagnostic dataset
+pool_diag <- coal_data%>%
+  ungroup()%>%
+  mutate(resid_value = residuals(pool_model),
+         fit_value = fitted(pool_model))
+
+#Create figure panels
+p1 <- pool_diag%>%
+  ggplot(aes(x=mortality, y=fit_value))+
+  geom_point()+
+  theme_bw()+
+  labs(title = "Pooled Data OLS",
+       subtitle = "Fitted Values vs. Actual Values",
+       y= "Fitted Values", x="Mortality")
+
+p2 <- coal_data_diag%>%
+  ggplot(aes(x=mortality, y=fit_value))+
+  geom_point()+
+  theme_bw()+
+  labs(title = "Mulitlevel Regression Model",
+       subtitle = "Fitted Values vs. Actual Values",
+       y= "Fitted Values", x="Mortality")
+
+p3 <- pool_diag%>%
+  ggplot(aes(x=resid_value, y=fit_value))+
+  geom_point()+
+  theme_bw()+
+  labs(title = "Pooled Data OLS",
+       subtitle = "Fitted Values vs. Residual Values",
+       y= "Fitted Values", x="Residual Values")
+
+p4 <- coal_data_diag%>%
+  ggplot(aes(x=resid_value, y=fit_value))+
+  geom_point()+
+  theme_bw()+
+  labs(title = "Mulitlevel Regression Model",
+       subtitle = "Fitted Values vs. Residual Values",
+       y= "Fitted Values", x="Residual Values")
+
+#create figure
+png("Visualizations/Pool_vs_MLM-Diag.png", width = 8.66, height=5.75, units = "in", res = 600)
+grid.arrange(p1, p2, p3, p4, nrow=2)
+dev.off()
+
 #Residuals by state ####
 #Creating list of all states
 state_list <- as.data.frame(table(coal_data_diag$State))[,1]

@@ -137,7 +137,6 @@ read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>%
   dplyr::select(everything(), -FIPS)%>%
   sapply(function(x) sum(is.na(x)))%>%
   as.data.frame()%>%
-  View()
   summarise(mean_na = mean(.),
             dist = median(.),
             max= max(.),
