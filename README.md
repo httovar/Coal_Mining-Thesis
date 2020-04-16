@@ -1,2 +1,2 @@
 # Coal_Mining-Thesis
-This repository contains code for my thesis project on the relationship between coal mining and county level mortality rates
+This repository contains code for my master's thesis in Applied Data Analytics at Appalachian State University. The focus of my research is the relationship between coal mining and county-level mortality rates. I succesfully defended on April 8, 2020 and the thesis is currently under review by the graduate school. As of now, only data and code are available through this repo. However, I am working on producing a markdown document that summarizes my research. The full thesis is available upon request as well.
