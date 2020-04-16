@@ -1,5 +1,6 @@
 ##### CODE FILE FOR COAL MINING THESIS PROJECT ######
 ## CODE FILE 3 - Multilevel Modeling and Diagnostics
+#The code in this file reflects the level selection process rather than the sequence of tables and figures in the thesis.
 
 #Set up required packages####
 library(lme4)
@@ -176,7 +177,9 @@ data.frame(ICC=reghelper::ICC(cm_amm_app_int_dems_model), AICc=AICc(cm_amm_app_i
   pivot_longer(cols=everything(), names_to = "Measure", values_to = "Statistic")%>%
   write_csv(path="Data/Tables/Model_Summary/Table_11-FN/cm_amm_app_int_dems_model_stats.csv")
 
-# Outlier Analysis - These calculations take a long time ####
+
+#Outlier Analysis after full model is specified ####
+#These calculations take a long time
 
 #Cook's Distance for group level.
 #Rather than each observation, each group is excluded
@@ -239,7 +242,7 @@ data.frame(ICC=reghelper::ICC(full_model_no), BIC=BIC(full_model_no), AICc=AICc(
   write_csv(path="Data/Tables/Model_Summary/full_model_no_stats.csv")
 
 
-#influence measure for model w/o outliers
+#influence measure for model w/o outliers####
 alt_est_c <- influence(full_model_no, group = "State", count = T)
 
 #Influence measure data frame 
@@ -293,13 +296,15 @@ influence_obs%>%
             outliers_sum = sum(cooks_d>3*mean(cooks_d)))%>%
   write_csv("Data/Tables/table_3-outlier.csv")
 
-#Tables for Appendix Summary Statistics for Excluded Influential Observations ####
+#Table 10, Appendix - State-level Summary Statistics for Excluded Influential Observations ####
+#Calculating number of counties that are excluded per state
 county_n <- coal_data%>%
   filter(year==2010)%>%
   group_by(State)%>%
   summarise(n_one = length(County),
             n_total= n*8)
 
+#summary statistics for states with excluded counties. 
 coal_data%>%
   filter(cook_d_out ==1)%>%
   group_by(State)%>%
@@ -313,7 +318,7 @@ coal_data%>%
   write_csv("Data/Tables/table_App-outlier-State_sum.csv")
 
 
-
+#Table 11, Appendix - Summary statistics of excluded observations by year ####
 coal_data%>%
   filter(cook_d_out ==1)%>%
   group_by(year)%>%
@@ -325,7 +330,7 @@ coal_data%>%
             mean_area = mean(land_area_std))%>%
   write_csv("Data/Tables/table_App-outlier-year_sum.csv")
 
-# More Plots for Outlier Treatment - Appendix ####
+# Figure 13-15, Appendix - influence measurement beta-coefficients ####
 q1 <- influence_state%>%
   mutate(State = row.names(influence_state))%>%
   ggplot(aes(y=df_betas.perc_hisp_std, x= as.factor(State)))+ 
@@ -426,12 +431,9 @@ png("Visualizations/Appendix-Outlier-coal_int.png", width = 8.66, height=5.75, u
 gridExtra::grid.arrange(q5, q6, nrow=1)
 dev.off()
 
-#Figure 6 - Cook's D Observation level
 
 
-
-
-#Figure 6 - Coefficient Visualizations Full Model/Full Data#####
+#Figure NOT INCLUDED - Coefficient Visualizations Full Model/Full Data with outliers #####
 png("Visualizations/Full-Model-Vis.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 full_model%>%
@@ -470,7 +472,7 @@ full_model%>%
 
 dev.off()
 
-#Figure X - Coefficient Visualizations - No Outliers #####
+#Figure 6 - Coefficient Visualizations - No Outliers #####
 png("Visualizations/Full-Model-No-Out-Vis.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 full_model_no%>%
@@ -523,7 +525,7 @@ ranef(full_model_no)$State%>%
 
 dev.off()
 
-#Figure X - Correlation between Ran Slope and Ran Intercept ####
+#Figure 7 - Correlation between Ran Slope and Ran Intercept ####
 png("Visualizations/FIGURE-Corr.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 ranef(full_model)$State%>%
@@ -537,7 +539,7 @@ ranef(full_model)$State%>%
 
 dev.off()
 
-#Fig X (App) Correlation Ran_Slop, Ran_Int - full model vs. uncond growth#####
+#Fig 16, Appendix - Correlation Ran_Slop, Ran_Int - full model vs. uncond growth#####
 png("Visualizations/FIGURE-App-Corr_Comp.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 ranef(full_model_no)$State%>%
@@ -562,7 +564,7 @@ coal_data_diag <- coal_data%>%
   ungroup()%>%
   mutate(resid_value = residuals(full_model_no),
          fit_value = fitted(full_model_no))
-#Figure X - Fitted vs. y-Values  and total distribution####
+#Figure 8 - Fitted vs. y-Values  and total distribution####
 
 q1<-coal_data_diag%>%
   ggplot(aes(x=mortality, y=fit_value))+
@@ -587,7 +589,7 @@ png("Visualizations/Diag-Fit_vs_Mort.png", width = 8.66, height=5.75, units = "i
 grid.arrange(q1, q2, nrow=2)
 dev.off()
 
-# Figure X - Fitted vs. Residuals
+# Figure 9 - Fitted vs. Residuals ####
 png("Visualizations/Diag-Fit_vs_Resid.png", width = 8.66, height=5.75, units = "in", res = 600)
 coal_data_diag%>%
   ggplot(aes(x=resid_value, y=fit_value))+
@@ -599,7 +601,7 @@ coal_data_diag%>%
 
 dev.off()
 
-#Figure App. Residuals Faceted by year ####
+#Figure 10 Residuals Faceted by year ####
 png("Visualizations/Diag-by-Year.png", width = 8.66, height=5.75, units = "in", res = 600)
 
 coal_data_mod%>%
@@ -675,7 +677,7 @@ png("Visualizations/Pool_vs_MLM-Diag.png", width = 8.66, height=5.75, units = "i
 grid.arrange(p1, p2, p3, p4, nrow=2)
 dev.off()
 
-#Residuals by state ####
+#Appendix E - Residuals by state ####
 #Creating list of all states
 state_list <- as.data.frame(table(coal_data_diag$State))[,1]
 #creating sequence list
@@ -718,7 +720,7 @@ for(i in 1:6){
   
 }
 
-#Random Effect Diagnostics ####
+#Figure 11 - Random Effect Diagnostics ####
 png("Visualizations/RanEf-Diag.png", width = 8.66, height=5.75, units = "in", res = 600)
 plotREsim(REsim(full_model_no), stat = "median", level = 0.95)  # plot the interval estimates
 dev.off()

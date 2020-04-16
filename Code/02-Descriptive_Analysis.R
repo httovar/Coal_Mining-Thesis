@@ -65,26 +65,6 @@ dev.off()
 
 
 #Figure 3, Coal Mining and Mortality Rates ######
-#State level mortality rate, coal vs. non-coal
-#specifying colors for plot
-p1 <- coal_data%>%
-  group_by(State, year)%>%
-  summarize(stae_average = mean(mortality),
-            coal_mining = max(coal_mining))%>%
-  ggplot(aes(x = year, y = stae_average, group=interaction(State, coal_mining), color=as.factor(coal_mining)),
-         show.legend = F) +  
-  geom_line(alpha=0.5, show.legend = F) + 
-  geom_smooth(aes(group=coal_mining, linetype=as.factor(coal_mining)), 
-              method="lm", se = FALSE, size = 2, show.legend = F) + 
-  theme_bw() + 
-  coord_cartesian(xlim = c(2010, 2017))+
-  labs(x="Time", y="Mortality Rate",
-       title = "State Mortality Rate",
-       subtitle = "Coal Mining vs. Non-Mining States",
-       caption = "Coal Mining States are represented in blue, non-mining states in red.")+
-  scale_color_grey(start=0, end=0.5)
-
-
 #state level mortality vs. coal production
 p2 <- coal_data%>%
   filter(coal_prod>0 & coal_prod<1000000)%>%
@@ -102,7 +82,6 @@ p2
 dev.off()
 
 #Table 2 - Descriptive Analysis of continuous variables, Table Quantities #####
-
 #Reading in intial data set for descriptive analysis
 read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>% 
   filter(FIPS %in% read_csv("Data/Full_Data.csv")$FIPS)%>%
@@ -131,7 +110,7 @@ read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>%
   write_csv("Data/Tables/table_2-quant.csv")
 
 
-#Footnote on missing values
+#Footnote 2 on missing values of county level health indicators
 read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>% 
   filter(FIPS %in% read_csv("Data/Full_Data.csv")$FIPS)%>%
   dplyr::select(everything(), -FIPS)%>%
@@ -143,7 +122,7 @@ read_csv(file.path("Data/Health_Indicators_County_level.csv"))%>%
             min= min(.))
   
 
-#Table Appendix - Descriptives of non-continuous variables Variables by State ####
+#Table 8, Appendix - Descriptives of non-continuous variables Variables by State ####
 descr_ind <- coal_data%>%
   ungroup()%>%
   dplyr::select(State, rural, median_mining, coal_mining, Appalachia)%>%
@@ -160,10 +139,6 @@ coal_data%>%
 
 
 # Figure 4 Population Distribution ####
-
-#setwd(file.path("...", "Visualizations"))
-
-
 png("Visualizations/FIGURE4.png", width = 8.66, height=5.75, units = "in", res = 600)
 coal_data%>%
   ggplot()+
