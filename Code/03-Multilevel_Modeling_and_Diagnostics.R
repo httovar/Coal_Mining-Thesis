@@ -200,13 +200,6 @@ influence_state <- data.frame(cooks_d = cooks.distance(alt_est_a),
 #                            sig_test = sigtest(alt_est_b),
 #                            df_betas = dfbetas(alt_est_b))
 
-#Creating dataset with obs-level cook's d and indicator for observations above cut-off
-
-#coal_data_mod <- coal_data%>%
-#  ungroup()%>%
-#  mutate(cooks_d = cooks.distance(alt_est_b),
-#         cook_d_out = as.numeric(cooks_d>3*mean(cooks_d)))
-
 #Rather read in the csv file that contains observation level measures in the repository
 influence_obs <- read_csv("Data/obs_outlier_diag.csv")
 
