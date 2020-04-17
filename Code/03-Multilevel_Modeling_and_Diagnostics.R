@@ -704,10 +704,10 @@ for(i in 1:6){
     facet_wrap(~State, scales = "free", nrow=3)+
     theme_bw()+
     labs(title = "Regression Model Diagnostics",
-         subtitle = "Residuals vs. Fitted Values, Facetted by Year",
-         x="Fitted Value",
-         y="Residual Value")
-
+         subtitle = "Residuals Density",
+         x="Residual Value",
+         y="Density")
+  
   ggsave(paste("Visualizations/Residual_states/Residual_states_Density", interval_sq[i],"-",(interval_sq[i]+8),
                ".png" ,sep = ""), width = 8.66, height=5.75, units = "in", dpi = 600)
   
