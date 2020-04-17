@@ -597,7 +597,7 @@ dev.off()
 #Figure 10 Residuals Faceted by year ####
 png("Visualizations/Diag-by-Year.png", width = 8.66, height=5.75, units = "in", res = 600)
 
-coal_data_mod%>%
+coal_data_diag%>%
   ggplot(aes(y=fit_value, x=resid_value))+
   geom_point()+
   facet_wrap(~year, scales = "free")+
@@ -679,7 +679,7 @@ interval_sq <- seq(from=1, to=51, by=9)
 #residual plots - Fitted vs. Residual
 for(i in 1:6){
 
-  coal_data_mod%>%
+  coal_data_diag%>%
     filter(State %in% state_list[interval_sq[i]:(interval_sq[i]+8)])%>% 
     ggplot(aes(x=fit_value, y=resid_value))+
     geom_point()+
@@ -697,7 +697,7 @@ for(i in 1:6){
 #Residual plots - Residual Density
 for(i in 1:6){
   
-  coal_data_mod%>%
+  coal_data_diag%>%
     filter(State %in% state_list[interval_sq[i]:(interval_sq[i]+8)])%>% 
     ggplot(aes(x=resid_value))+
     geom_density()+
